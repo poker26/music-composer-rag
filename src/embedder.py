@@ -1,25 +1,80 @@
-"""Generate embedding vectors for Qdrant from extracted features."""
+"""Generate embedding vectors for Qdrant using CLAP (Contrastive Language-Audio Pretraining)."""
 import numpy as np
 import logging
+import tempfile
+import soundfile as sf
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 EMBEDDING_DIM = 512
 
+# Lazy-loaded CLAP model (heavy, load once)
+_clap_model = None
 
-def build_embedding(features):
+
+def _get_clap_model():
+    """Load CLAP model on first use."""
+    global _clap_model
+    if _clap_model is None:
+        import laion_clap
+        logger.info("Loading CLAP model (first time, may take a moment)...")
+        _clap_model = laion_clap.CLAP_Module(enable_fusion=False)
+        _clap_model.load_ckpt()
+        logger.info("CLAP model loaded.")
+    return _clap_model
+
+
+def build_embedding(features, audio_data=None, sr=22050):
     """
-    Build a fixed-size embedding vector from audio features.
-    Layout (512 dims): mel_mean[128] + mel_std[128] + mel_min[128] + mel_max[128]
-    Normalized to unit length.
+    Build embedding using CLAP if audio_data is provided,
+    otherwise fall back to mel-statistics.
+
+    Args:
+        features: dict of extracted audio features
+        audio_data: numpy array of audio samples (mono, float32)
+        sr: sample rate
     """
+    if audio_data is not None:
+        try:
+            return _build_clap_embedding(audio_data, sr)
+        except Exception as e:
+            logger.warning("CLAP embedding failed, falling back to mel: %s", e)
+
+    return _build_mel_embedding(features)
+
+
+def _build_clap_embedding(audio_data, sr):
+    """Build CLAP embedding from raw audio."""
+    model = _get_clap_model()
+
+    # CLAP expects 48kHz audio files, so we need to write a temp WAV
+    # and let CLAP handle resampling internally
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp_path = tmp.name
+        sf.write(tmp_path, audio_data, sr)
+
+    try:
+        embedding = model.get_audio_embedding_from_filelist(
+            x=[tmp_path], use_tensor=False
+        )
+        vec = embedding[0].tolist()
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+    # CLAP outputs 512-dim vector
+    assert len(vec) == EMBEDDING_DIM, f"CLAP returned {len(vec)} dims, expected {EMBEDDING_DIM}"
+    return vec
+
+
+def _build_mel_embedding(features):
+    """Fallback: build embedding from mel-spectrogram statistics."""
     mel_mean = features.get("mel_mean", np.zeros(128))
     mel_std = features.get("mel_std", np.zeros(128))
     mel_min = features.get("mel_min", np.zeros(128))
     mel_max = features.get("mel_max", np.zeros(128))
 
     raw = np.concatenate([mel_mean, mel_std, mel_min, mel_max])
-
     norm = np.linalg.norm(raw)
     if norm > 0:
         raw = raw / norm

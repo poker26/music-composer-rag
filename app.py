@@ -48,7 +48,6 @@ def get_dashboard():
         stats = store.get_stats()
         total = stats["total_points"]
 
-        # Get composer distribution by scrolling points
         composers = {}
         offset = None
         batch_size = 100
@@ -72,7 +71,6 @@ def get_dashboard():
             if next_offset is None:
                 break
 
-        # Format output
         lines = []
         lines.append(f"## Collection: {COLLECTION_NAME}")
         lines.append(f"**Total fragments:** {total}")
@@ -116,12 +114,10 @@ def ingest_files(files, composer, era, genre, instrument, skip_midi):
     for file_path in files:
         file_path = Path(file_path)
         try:
-            # Convert to WAV
             wav_path = convert_to_wav(file_path, WAV_DIR, SAMPLE_RATE)
             y, sr = load_audio(wav_path, SAMPLE_RATE)
             duration = len(y) / sr
 
-            # MIDI transcription
             midi_features = {}
             if not skip_midi:
                 try:
@@ -130,13 +126,15 @@ def ingest_files(files, composer, era, genre, instrument, skip_midi):
                 except Exception as e:
                     logger.warning("MIDI failed for %s: %s", file_path.name, e)
 
-            # Fragment and process
             fragments = list(fragment_audio(y, sr, FRAGMENT_DURATION_SEC, FRAGMENT_OVERLAP_SEC))
             batch = []
             for i, (frag_audio, start_sec, end_sec) in enumerate(fragments):
                 features = extract_all_features(frag_audio, sr, N_MELS, N_CHROMA, HOP_LENGTH)
                 features.update(midi_features)
-                embedding = build_embedding(features)
+
+                # Pass audio data for CLAP embedding
+                embedding = build_embedding(features, audio_data=frag_audio, sr=sr)
+
                 source_info = {
                     **metadata,
                     "file": file_path.name,
@@ -181,9 +179,10 @@ def search_similar(audio_file, limit, composer_filter, key_filter, tempo_min, te
             y = y[:frag_samples]
 
         features = extract_all_features(y, sr, N_MELS, N_CHROMA, HOP_LENGTH)
-        query_vec = build_embedding(features)
 
-        # Query info
+        # Pass audio data for CLAP embedding
+        query_vec = build_embedding(features, audio_data=y, sr=sr)
+
         query_key = features.get("key_label", "?")
         query_tempo = features.get("tempo_bpm", 0)
 
@@ -200,10 +199,8 @@ def search_similar(audio_file, limit, composer_filter, key_filter, tempo_min, te
             composer=composer, key=key, tempo_range=tempo_range,
         )
 
-        # Cleanup
         shutil.rmtree(wav_dir, ignore_errors=True)
 
-        # Format results
         lines = []
         lines.append(f"### Query Analysis")
         lines.append(f"**Detected key:** {query_key} | **Tempo:** {query_tempo:.0f} BPM | **Duration:** {len(y)/sr:.1f}s")

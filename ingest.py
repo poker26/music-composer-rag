@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Music Composer RAG - Ingestion Pipeline
+Music Composer RAG - Ingestion Pipeline (CLAP version)
 Usage:
-  python ingest.py --input ./input/chopin --composer "Chopin" --era "romantic"
-  python ingest.py --input ./input/bach --composer "Bach" --era "baroque" --skip-midi
+  python3 ingest.py --input ./input/chopin --composer "Chopin" --era "romantic"
+  python3 ingest.py --input ./input/bach --composer "Bach" --era "baroque" --skip-midi
 """
 import argparse
 import logging
@@ -56,7 +56,8 @@ def process_file(wav_path, metadata, store, skip_midi=False):
         features = extract_all_features(frag_audio, sr, N_MELS, N_CHROMA, HOP_LENGTH)
         features.update(midi_features)
 
-        embedding = build_embedding(features)
+        # Pass audio data for CLAP embedding
+        embedding = build_embedding(features, audio_data=frag_audio, sr=sr)
 
         source_info = {
             **metadata,

@@ -2,8 +2,8 @@
 """
 Quick search CLI for testing the database.
 Usage:
-  python search.py --file query.wav --limit 5
-  python search.py --file query.wav --composer "Chopin" --tempo 60-100
+  python3 search.py --file query.wav --limit 5
+  python3 search.py --file query.wav --composer "Chopin" --tempo 60-100
 """
 import argparse
 import sys
@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config.settings import (
     SAMPLE_RATE, N_MELS, N_CHROMA, HOP_LENGTH,
     EMBEDDING_DIM, COLLECTION_NAME, QDRANT_HOST, QDRANT_PORT,
+    FRAGMENT_DURATION_SEC,
 )
 from src.audio_loader import load_audio
 from src.feature_extractor import extract_all_features
@@ -31,15 +32,24 @@ def main():
     args = parser.parse_args()
 
     y, sr = load_audio(Path(args.file), SAMPLE_RATE)
+
+    # Use first fragment
+    frag_samples = int(FRAGMENT_DURATION_SEC * sr)
+    if len(y) > frag_samples:
+        y = y[:frag_samples]
+
     features = extract_all_features(y, sr, N_MELS, N_CHROMA, HOP_LENGTH)
-    query_vec = build_embedding(features)
+    query_vec = build_embedding(features, audio_data=y, sr=sr)
 
     tempo_range = None
     if args.tempo:
         lo, hi = args.tempo.split("-")
         tempo_range = (float(lo), float(hi))
 
-    store = MusicVectorStore(host=QDRANT_HOST, port=QDRANT_PORT, collection=COLLECTION_NAME, dim=EMBEDDING_DIM)
+    store = MusicVectorStore(
+        host=QDRANT_HOST, port=QDRANT_PORT,
+        collection=COLLECTION_NAME, dim=EMBEDDING_DIM,
+    )
     results = store.search_similar(
         query_vec, limit=args.limit,
         composer=args.composer, key=args.key, tempo_range=tempo_range,
