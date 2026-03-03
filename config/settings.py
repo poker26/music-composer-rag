@@ -8,7 +8,7 @@ MIDI_DIR = OUTPUT_DIR / "midi"
 FEATURES_DIR = OUTPUT_DIR / "features"
 WAV_DIR = OUTPUT_DIR / "wav"
 
-QDRANT_HOST = "localhost"
+QDRANT_HOST = "45.12.72.157"
 QDRANT_PORT = 6333
 COLLECTION_NAME = "music_fragments"
 

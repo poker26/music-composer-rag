@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from config.settings import (
     SAMPLE_RATE, N_MELS, N_CHROMA, HOP_LENGTH,
-    EMBEDDING_DIM, COLLECTION_NAME,
+    EMBEDDING_DIM, COLLECTION_NAME, QDRANT_HOST, QDRANT_PORT,
 )
 from src.audio_loader import load_audio
 from src.feature_extractor import extract_all_features
@@ -39,7 +39,7 @@ def main():
         lo, hi = args.tempo.split("-")
         tempo_range = (float(lo), float(hi))
 
-    store = MusicVectorStore(collection=COLLECTION_NAME, dim=EMBEDDING_DIM)
+    store = MusicVectorStore(host=QDRANT_HOST, port=QDRANT_PORT, collection=COLLECTION_NAME, dim=EMBEDDING_DIM)
     results = store.search_similar(
         query_vec, limit=args.limit,
         composer=args.composer, key=args.key, tempo_range=tempo_range,

@@ -100,6 +100,5 @@ class MusicVectorStore:
         info = self.client.get_collection(self.collection)
         return {
             "total_points": info.points_count,
-            "vectors_count": info.vectors_count,
             "status": info.status.value,
         }
