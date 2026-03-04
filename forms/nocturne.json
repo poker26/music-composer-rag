@@ -1,0 +1,69 @@
+{
+  "id": "nocturne",
+  "name": "Nocturne",
+  "description": "Lyrical night piece in ternary form with ornamental melody over arpeggiated accompaniment",
+  "typical_tempo_range": [50, 80],
+  "typical_time_signatures": [[3, 4], [4, 4], [6, 8]],
+  "structure": {
+    "form": "A-B-A'-Coda",
+    "sections": [
+      {
+        "id": "A",
+        "name": "Theme A",
+        "description": "Main lyrical theme, cantabile melody in the right hand over broken chord accompaniment",
+        "bars_range": [8, 16],
+        "dynamic_arc": "p -> mp",
+        "key_relation": "tonic",
+        "melody_character": "Singing, legato line with long notes on strong beats and ornamental turns, trills, grace notes on weak beats. Phrases typically 4 bars long with clear arch-shaped contour (ascending to climax, then descending to rest).",
+        "accompaniment_character": "Steady broken chord pattern (arpeggiated left hand), typically root-fifth-octave-fifth or similar nocturne pattern. Must be rhythmically regular to contrast with the free melody.",
+        "harmonic_rhythm": "One chord per bar, occasionally two in cadential bars",
+        "ends_with": "Half cadence or imperfect authentic cadence (creates expectation)"
+      },
+      {
+        "id": "B",
+        "name": "Theme B (Contrasting)",
+        "description": "Contrasting middle section with increased intensity and different character",
+        "bars_range": [8, 16],
+        "dynamic_arc": "mp -> f -> mp",
+        "key_relation": "relative major (if tonic is minor), subdominant, or mediant",
+        "melody_character": "More agitated, faster note values, wider intervals. Can be more dramatic or passionate. Should contrast clearly with Theme A but share some motivic connection (interval or rhythm cell).",
+        "accompaniment_character": "Can shift to more active patterns: thicker chords, tremolo, or faster arpeggiation. May include dialogue between hands.",
+        "harmonic_rhythm": "Faster harmonic rhythm (2 chords per bar), more chromaticism, use of diminished and augmented chords",
+        "ends_with": "Dominant preparation (V or V7 of original key) to set up return"
+      },
+      {
+        "id": "A_prime",
+        "name": "Theme A' (Reprise)",
+        "description": "Return of Theme A with ornamental variation - the melody should be recognizably the same but embellished",
+        "bars_range": [8, 16],
+        "dynamic_arc": "p -> mf -> p",
+        "key_relation": "tonic (return to home key)",
+        "melody_character": "CRITICAL: Must use the SAME melodic outline as Theme A but with added ornaments: chromatic passing tones, turns, trills, extended runs, cadenza-like flourishes. The listener must recognize Theme A underneath the decoration.",
+        "accompaniment_character": "Same pattern as Theme A but can be slightly fuller or with added inner voices",
+        "harmonic_rhythm": "Same as Theme A, possibly with richer substitutions",
+        "ends_with": "Perfect authentic cadence (V-I with melody arriving on tonic)"
+      },
+      {
+        "id": "Coda",
+        "name": "Coda",
+        "description": "Brief closing passage that dissolves into silence",
+        "bars_range": [2, 4],
+        "dynamic_arc": "p -> pp",
+        "key_relation": "tonic",
+        "melody_character": "Fragments of Theme A, slowing down (written-out ritardando with longer note values). Final note should be a long tonic note.",
+        "accompaniment_character": "Thinning texture, wider spacing, final tonic chord",
+        "harmonic_rhythm": "Slow: plagal cadence (IV-I) or simple tonic pedal",
+        "ends_with": "Final tonic, pianissimo"
+      }
+    ]
+  },
+  "composition_rules": [
+    "Theme A' must reuse the melodic contour of Theme A with added ornamentation",
+    "Accompaniment pattern should remain consistent within sections for unity",
+    "Bass should move primarily by step or by fourth/fifth",
+    "Melody should occupy a higher register than accompaniment with clear separation",
+    "Use pedal markings (long bass notes) for sustained harmonic support",
+    "Chromaticism increases in Theme B and decreases in the Coda",
+    "Total duration typically 3-6 minutes"
+  ]
+}

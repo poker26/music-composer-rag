@@ -1,0 +1,60 @@
+{
+  "id": "fugue",
+  "name": "Fugue",
+  "description": "Contrapuntal composition based on a subject that is introduced and developed through imitative entries",
+  "typical_tempo_range": [72, 132],
+  "typical_time_signatures": [[4, 4], [3, 4], [2, 2]],
+  "structure": {
+    "form": "Exposition-Episodes-Final Entry",
+    "sections": [
+      {
+        "id": "Exposition",
+        "name": "Exposition",
+        "description": "Subject enters in each voice successively",
+        "bars_range": [8, 16],
+        "dynamic_arc": "mp -> mf",
+        "key_relation": "tonic, then dominant for answer",
+        "melody_character": "CRITICAL: Define a clear SUBJECT (4-8 bars) - a distinctive melodic line that is the DNA of the entire fugue. Must be rhythmically distinctive and melodically memorable. First voice states subject alone. Second voice enters with ANSWER (subject transposed to dominant, may be tonal - adjusted intervals at beginning/end to stay in key). Third voice enters with subject in tonic again. While one voice has subject/answer, other voices have COUNTERSUBJECT - a complementary melody that works contrapuntally against the subject.",
+        "accompaniment_character": "NO traditional accompaniment. Each voice is an independent melodic line. Voices accumulate one by one.",
+        "harmonic_rhythm": "Implied by the contrapuntal movement of voices",
+        "ends_with": "All voices have entered, brief codetta establishing tonic"
+      },
+      {
+        "id": "Episode_1",
+        "name": "Episode / Development",
+        "description": "Free contrapuntal development using fragments of the subject",
+        "bars_range": [8, 20],
+        "dynamic_arc": "mf -> f -> mf",
+        "key_relation": "modulates through related keys (relative major/minor, subdominant, supertonic)",
+        "melody_character": "Uses FRAGMENTS of the subject in sequence (repeating a pattern at different pitch levels). May use subject in inversion (upside down), augmentation (doubled note values), or diminution (halved note values). Episodes provide contrast and modulatory movement between subject entries.",
+        "accompaniment_character": "Continued independent voice movement. May thin to 2 voices for contrast before building back.",
+        "harmonic_rhythm": "Active modulation, sequential harmony",
+        "ends_with": "Arrives at a new key for a middle entry of the subject"
+      },
+      {
+        "id": "Stretto",
+        "name": "Final Section / Stretto",
+        "description": "Climactic section with overlapping subject entries",
+        "bars_range": [6, 12],
+        "dynamic_arc": "f -> ff",
+        "key_relation": "return to tonic",
+        "melody_character": "STRETTO: Subject entries overlap - a new voice begins the subject before the previous voice has finished it. This creates maximum contrapuntal intensity. May include subject in augmentation in the bass while upper voices have normal or diminished versions. Final statement of complete subject in the bass voice.",
+        "accompaniment_character": "All voices active, maximum textural density",
+        "harmonic_rhythm": "Strong emphasis on tonic and dominant, pedal point on dominant then tonic",
+        "ends_with": "Dominant pedal -> final tonic chord, possibly with a brief tierce de Picardie (major chord ending a minor fugue)"
+      }
+    ]
+  },
+  "composition_rules": [
+    "The SUBJECT must appear in every section - it is the unifying element",
+    "ANSWER is the subject transposed to the dominant (up a 5th or down a 4th)",
+    "COUNTERSUBJECT must work contrapuntally against the subject (invertible counterpoint)",
+    "Episodes use subject fragments, never completely new material",
+    "Each voice must be singable as an independent melody",
+    "Avoid parallel fifths and octaves between voices",
+    "Stretto entries must be closer together than exposition entries",
+    "Bass voice should have the final complete statement of the subject",
+    "Typical voicing for 3 voices: soprano (high), alto (middle), bass (low)",
+    "For 4 voices add: soprano, alto, tenor, bass"
+  ]
+}

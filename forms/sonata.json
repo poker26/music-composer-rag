@@ -1,0 +1,93 @@
+{
+  "id": "sonata",
+  "name": "Sonata Form (First Movement)",
+  "description": "Classical sonata-allegro form with two contrasting themes, development, and recapitulation",
+  "typical_tempo_range": [100, 160],
+  "typical_time_signatures": [[4, 4], [3, 4]],
+  "structure": {
+    "form": "Exposition-Development-Recapitulation-Coda",
+    "sections": [
+      {
+        "id": "Exposition_P",
+        "name": "Exposition - Primary Theme",
+        "description": "Strong, assertive opening theme establishing the home key",
+        "bars_range": [8, 16],
+        "dynamic_arc": "f -> mf",
+        "key_relation": "tonic",
+        "melody_character": "Bold, rhythmically distinctive theme with a clear motif (short memorable pattern of 2-4 notes). Strong rhythmic profile. Often starts with an upbeat or anacrusis. Should be immediately memorable and recognizable when it returns.",
+        "accompaniment_character": "Supportive, reinforcing the rhythmic energy. Can be unison passages, block chords, or tremolo.",
+        "harmonic_rhythm": "Moderate (1-2 chords per bar), strong tonal center",
+        "ends_with": "Transition passage modulating to dominant (or relative major if minor key)"
+      },
+      {
+        "id": "Exposition_S",
+        "name": "Exposition - Secondary Theme",
+        "description": "Contrasting lyrical theme in a new key",
+        "bars_range": [8, 16],
+        "dynamic_arc": "p -> mp -> mf",
+        "key_relation": "dominant (V) if tonic is major; relative major (III) if tonic is minor",
+        "melody_character": "Lyrical, singing quality - contrasts with the rhythmic Primary Theme. Longer note values, smoother contour. May include a closing theme (codetta) that is more rhythmic.",
+        "accompaniment_character": "Lighter texture, possibly arpeggiated or with a singing bass line",
+        "harmonic_rhythm": "Slower, more expansive harmonies",
+        "ends_with": "Strong cadence in the new key, possibly with a brief codetta"
+      },
+      {
+        "id": "Development",
+        "name": "Development",
+        "description": "Fragmentation and transformation of both themes through various keys",
+        "bars_range": [12, 24],
+        "dynamic_arc": "mf -> f -> ff -> p (retransition)",
+        "key_relation": "remote keys, chromatic, unstable",
+        "melody_character": "CRITICAL: Must use recognizable fragments of both Primary and Secondary themes, but transformed: inverted, augmented, diminished, sequenced through different keys. Build tension through fragmentation (shorter and shorter motif statements). Include a retransition (dominant pedal) preparing the recapitulation.",
+        "accompaniment_character": "More contrapuntal, themes may appear in bass or inner voices. Increased textural complexity.",
+        "harmonic_rhythm": "Fast and unstable, frequent modulations, sequences",
+        "ends_with": "Dominant pedal (sustained or repeated V chord) building tension before recapitulation"
+      },
+      {
+        "id": "Recapitulation_P",
+        "name": "Recapitulation - Primary Theme",
+        "description": "Return of Primary Theme in the home key",
+        "bars_range": [8, 12],
+        "dynamic_arc": "f -> mf",
+        "key_relation": "tonic (home key)",
+        "melody_character": "CRITICAL: Must be the SAME melody as Exposition Primary Theme, possibly with minor variations. The return should feel like a homecoming.",
+        "accompaniment_character": "Same as exposition, possibly slightly fuller",
+        "harmonic_rhythm": "Same as exposition",
+        "ends_with": "Transition, but this time staying in the tonic key"
+      },
+      {
+        "id": "Recapitulation_S",
+        "name": "Recapitulation - Secondary Theme",
+        "description": "Secondary Theme now transposed to the home key",
+        "bars_range": [8, 12],
+        "dynamic_arc": "p -> mf -> f",
+        "key_relation": "tonic (NOT dominant - this is the key difference from exposition)",
+        "melody_character": "CRITICAL: Same melody as Exposition Secondary Theme but transposed to the tonic key. This resolves the tonal tension of the exposition.",
+        "accompaniment_character": "Same character as exposition secondary theme",
+        "harmonic_rhythm": "Same as exposition",
+        "ends_with": "Strong perfect authentic cadence in tonic"
+      },
+      {
+        "id": "Coda",
+        "name": "Coda",
+        "description": "Final closing section affirming the tonic",
+        "bars_range": [4, 8],
+        "dynamic_arc": "f -> ff",
+        "key_relation": "tonic",
+        "melody_character": "Based on Primary Theme motif, triumphant character. Strong rhythmic drive to the final cadence.",
+        "accompaniment_character": "Full texture, possibly octave doublings",
+        "harmonic_rhythm": "Slow, emphasis on tonic and dominant",
+        "ends_with": "Multiple perfect authentic cadences, final tonic chord"
+      }
+    ]
+  },
+  "composition_rules": [
+    "Primary and Secondary themes must have clearly different characters (rhythmic vs lyrical)",
+    "Exposition Secondary Theme must be in dominant or relative major",
+    "Recapitulation Secondary Theme MUST be transposed to tonic",
+    "Development must use material from both themes, not new material",
+    "Retransition (end of Development) must create strong expectation for tonic return",
+    "Primary Theme motif should be short (2-4 notes) and immediately recognizable",
+    "Total duration typically 5-12 minutes"
+  ]
+}
