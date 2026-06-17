@@ -1,4 +1,5 @@
 """Music Composer RAG - Configuration"""
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
@@ -8,8 +9,10 @@ MIDI_DIR = OUTPUT_DIR / "midi"
 FEATURES_DIR = OUTPUT_DIR / "features"
 WAV_DIR = OUTPUT_DIR / "wav"
 
-QDRANT_HOST = "45.12.72.157"
-QDRANT_PORT = 6333
+# Qdrant connection (only used by the legacy audio pipeline: ingest/search/app).
+# Override via env, e.g. QDRANT_HOST=localhost when running `docker run qdrant/qdrant`.
+QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
+QDRANT_PORT = int(os.environ.get("QDRANT_PORT", "6333"))
 COLLECTION_NAME = "music_fragments"
 
 SAMPLE_RATE = 22050
