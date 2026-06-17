@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 FORMS_DIR = Path(__file__).parent.parent / "forms"
 
-MODEL = "claude-sonnet-4-20250514"
+MODEL = "claude-sonnet-4-6"
 MAX_TOKENS_PER_SECTION = 14000
 
 # Instrument tracks are fixed for the whole piece (piano: melody / accomp / bass).
