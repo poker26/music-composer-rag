@@ -2,8 +2,28 @@
   "id": "prelude",
   "name": "Prelude",
   "description": "Free-form character piece unified by a single mood, texture, or figuration pattern",
-  "typical_tempo_range": [40, 160],
-  "typical_time_signatures": [[4, 4], [3, 4], [6, 8], [2, 4]],
+  "typical_tempo_range": [
+    40,
+    160
+  ],
+  "typical_time_signatures": [
+    [
+      4,
+      4
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      6,
+      8
+    ],
+    [
+      2,
+      4
+    ]
+  ],
   "structure": {
     "form": "Through-composed or A-A'-A''",
     "sections": [
@@ -11,7 +31,10 @@
         "id": "Opening",
         "name": "Opening / Establishment",
         "description": "Establish the central figuration pattern and mood",
-        "bars_range": [4, 8],
+        "bars_range": [
+          4,
+          8
+        ],
         "dynamic_arc": "p -> mp",
         "key_relation": "tonic",
         "melody_character": "Introduce the FIGURATION PATTERN - the defining textural idea of the prelude. This could be: a continuous arpeggiated pattern (like Chopin Op.28 No.1), a repeated rhythmic cell (like Bach WTC Prelude in C), a layered texture with melody emerging from figuration, or a single sustained mood. The pattern should be immediately distinctive and maintained throughout.",
@@ -23,7 +46,10 @@
         "id": "Development",
         "name": "Intensification",
         "description": "The central pattern continues but with harmonic and dynamic intensification",
-        "bars_range": [8, 16],
+        "bars_range": [
+          8,
+          16
+        ],
         "dynamic_arc": "mp -> f -> climax",
         "key_relation": "moves through related keys, building tension",
         "melody_character": "SAME FIGURATION PATTERN continues but: register expands (wider range), harmonic tension increases (chromatic chords, diminished chords, secondary dominants), dynamic builds toward climax. If there is a melody, it becomes more passionate/intense. The pattern may be slightly varied (added notes, thicker texture) but must remain recognizable.",
@@ -35,13 +61,17 @@
         "id": "Resolution",
         "name": "Resolution / Closing",
         "description": "Gradual release of tension, return to opening character",
-        "bars_range": [4, 8],
+        "bars_range": [
+          4,
+          8
+        ],
         "dynamic_arc": "f -> p -> pp",
         "key_relation": "return to tonic",
         "melody_character": "Pattern continues but simplifies. Tension dissolves. May recall the exact opening material. Final bars should have a sense of completion - arriving home.",
         "accompaniment_character": "Thinning texture, return to simplicity of opening",
         "harmonic_rhythm": "Slowing, emphasis on tonic",
-        "ends_with": "Final tonic, the pattern may stop abruptly or dissolve gradually"
+        "ends_with": "Final tonic, the pattern may stop abruptly or dissolve gradually",
+        "reprise_of": "Opening"
       }
     ]
   },

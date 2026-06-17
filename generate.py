@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Music Composer RAG - Generate (path C: LLM composer + form templates)
+Music Composer RAG - Generate
 
 Generation is driven by a hand-authored style profile (profiles/<composer>.json)
-plus a musical form template (forms/<form>.json). No Qdrant / audio pipeline is
-required to run this — only ANTHROPIC_API_KEY.
+plus a musical form template (forms/<form>.json). The only requirement to run
+this is ANTHROPIC_API_KEY.
 
 Usage:
   python3 generate.py --composer "Chopin" --key "E minor" --tempo 72 --duration 90 --mood "melancholic" --form nocturne

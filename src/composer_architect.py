@@ -1,7 +1,18 @@
 """
-Level 1 - Composition Architect (Claude API) v4
-Claude generates ALL tracks: melody, accompaniment, AND bass.
-This ensures proper voice leading, phrasing, and coordination between parts.
+Composition Architect (Claude API) - section-by-section generation.
+
+Instead of asking the model for the whole piece in one call (which capped pieces
+at ~32 bars and made reprises drift), we compose ONE section per API call:
+
+  - plan_sections()      decides how many bars each form section gets
+  - _generate_section()  composes a single section, given the style profile, the
+                         section spec, and "memory" of what came before
+  - assemble_blueprint() stitches sections together, renumbering bars to absolute
+                         positions, into the blueprint that midi_builder consumes
+
+Passing earlier material forward lets reprise sections (marked reprise_of in the
+form template) restate and ornament the original theme instead of inventing a new
+one, and keeps contrasting sections motivically connected.
 """
 import os
 import json
@@ -13,136 +24,116 @@ logger = logging.getLogger(__name__)
 
 FORMS_DIR = Path(__file__).parent.parent / "forms"
 
+MODEL = "claude-sonnet-4-20250514"
+MAX_TOKENS_PER_SECTION = 14000
+
+# Instrument tracks are fixed for the whole piece (piano: melody / accomp / bass).
+DEFAULT_TRACKS = [
+    {"name": "Melody", "channel": 0, "midi_program": 0, "role": "melody",
+     "register": {"low": 60, "high": 88}},
+    {"name": "Accompaniment", "channel": 1, "midi_program": 0, "role": "accompaniment",
+     "register": {"low": 48, "high": 72}},
+    {"name": "Bass", "channel": 2, "midi_program": 0, "role": "bass",
+     "register": {"low": 28, "high": 55}},
+]
+
+# Generic plan used when no form template is given (small ternary with frame).
+DEFAULT_FORM = {
+    "name": "Free form",
+    "structure": {
+        "form": "Intro-A-B-A'-Coda",
+        "sections": [
+            {"id": "Intro", "name": "Introduction", "bars_range": [2, 4],
+             "description": "Brief introduction establishing key, texture and mood.",
+             "dynamic_arc": "p", "ends_with": "Half cadence"},
+            {"id": "A", "name": "Theme A", "bars_range": [8, 16],
+             "description": "Main theme: a clear, singable melody over a steady accompaniment.",
+             "dynamic_arc": "p -> mp", "ends_with": "Imperfect authentic cadence"},
+            {"id": "B", "name": "Theme B", "bars_range": [8, 16],
+             "description": "Contrasting section in a related key with different character.",
+             "dynamic_arc": "mp -> f -> mp", "ends_with": "Dominant preparation"},
+            {"id": "A_prime", "name": "Theme A' (Reprise)", "bars_range": [8, 16],
+             "description": "Return of Theme A, ornamented.", "reprise_of": "A",
+             "dynamic_arc": "p -> mf -> p", "ends_with": "Perfect authentic cadence"},
+            {"id": "Coda", "name": "Coda", "bars_range": [2, 4],
+             "description": "Brief closing that dissolves to rest.",
+             "dynamic_arc": "p -> pp", "ends_with": "Final tonic"},
+        ],
+    },
+    "composition_rules": [],
+}
+
+
 SYSTEM_PROMPT = """You are a master composer with encyclopedic knowledge of music theory, counterpoint, harmony, and form.
-You compose detailed musical scores output as JSON.
+You compose ONE SECTION of a larger piano piece at a time, output as JSON.
 
-You will receive:
-1. A style profile of a specific composer
-2. Optionally, a musical FORM TEMPLATE with structural rules
-3. Parameters for the composition
-
-You must generate ALL tracks with explicit notes. This is critical for musical coherence.
-
-OUTPUT FORMAT - valid JSON only, no markdown, no commentary:
+OUTPUT FORMAT - valid JSON only, no markdown, no commentary. One section object:
 
 {
-  "title": "Title",
-  "key": "E minor",
-  "time_signature": [4, 4],
-  "tempo_bpm": 72,
-  "total_bars": 24,
-  "form": "nocturne",
-  "tracks": [
-    {
-      "name": "Melody",
-      "channel": 0,
-      "midi_program": 0,
-      "role": "melody",
-      "register": {"low": 60, "high": 88}
-    },
-    {
-      "name": "Accompaniment",
-      "channel": 1,
-      "midi_program": 0,
-      "role": "accompaniment",
-      "register": {"low": 48, "high": 72}
-    },
-    {
-      "name": "Bass",
-      "channel": 2,
-      "midi_program": 0,
-      "role": "bass",
-      "register": {"low": 28, "high": 55}
-    }
+  "title": "Optional - only include for the FIRST section, the title of the whole piece",
+  "chord_progression": ["Em", "Am", "D7", "G", "C", "Am", "B7", "Em"],
+  "melody": [
+    {"bar": 1, "notes": [
+      {"pitch": 67, "start_beat": 1.0, "duration": 2.0, "velocity": 58},
+      {"pitch": 71, "start_beat": 3.0, "duration": 1.0, "velocity": 62}
+    ]}
   ],
-  "sections": [
-    {
-      "name": "Theme A",
-      "form_id": "A",
-      "start_bar": 1,
-      "end_bar": 8,
-      "tempo_bpm": 72,
-      "dynamic": "p",
-      "chord_progression": ["Em", "Am", "D7", "G", "C", "Am", "B7", "Em"],
-      "melody": [
-        {"bar": 1, "notes": [
-          {"pitch": 67, "start_beat": 1.0, "duration": 2.0, "velocity": 58},
-          {"pitch": 71, "start_beat": 3.0, "duration": 1.0, "velocity": 62},
-          {"pitch": 74, "start_beat": 4.0, "duration": 1.0, "velocity": 65}
-        ]}
-      ],
-      "accompaniment": [
-        {"bar": 1, "notes": [
-          {"pitch": 52, "start_beat": 1.0, "duration": 0.5, "velocity": 40},
-          {"pitch": 59, "start_beat": 1.5, "duration": 0.5, "velocity": 38},
-          {"pitch": 64, "start_beat": 2.0, "duration": 0.5, "velocity": 42},
-          {"pitch": 59, "start_beat": 2.5, "duration": 0.5, "velocity": 38},
-          {"pitch": 52, "start_beat": 3.0, "duration": 0.5, "velocity": 40},
-          {"pitch": 59, "start_beat": 3.5, "duration": 0.5, "velocity": 38},
-          {"pitch": 64, "start_beat": 4.0, "duration": 0.5, "velocity": 42},
-          {"pitch": 59, "start_beat": 4.5, "duration": 0.5, "velocity": 38}
-        ]}
-      ],
-      "bass": [
-        {"bar": 1, "notes": [
-          {"pitch": 40, "start_beat": 1.0, "duration": 4.0, "velocity": 55}
-        ]}
-      ]
-    }
+  "accompaniment": [
+    {"bar": 1, "notes": [
+      {"pitch": 52, "start_beat": 1.0, "duration": 0.5, "velocity": 40}
+    ]}
+  ],
+  "bass": [
+    {"bar": 1, "notes": [
+      {"pitch": 40, "start_beat": 1.0, "duration": 4.0, "velocity": 55}
+    ]}
   ]
 }
+
+Number the bars of THIS section 1..N (local numbering); it will be placed into the
+full piece automatically. EVERY bar from 1 to N must appear in all three tracks.
 
 COMPOSITION PRINCIPLES:
 
 1. VOICE LEADING:
-   - Accompaniment voices should move by step (1-2 semitones) or common tone when chords change
+   - Accompaniment voices move by step or common tone when chords change
    - Avoid parallel fifths and octaves between any pair of voices
-   - The bass should move by step, fourth, or fifth (not leap randomly)
-   - When a chord changes, keep common tones and move other voices to the nearest chord tone
+   - Bass moves by step, fourth, or fifth (not random leaps)
 
 2. PHRASING:
-   - Melodies have 4-bar phrases (antecedent + consequent)
-   - Each phrase has an arch shape: rise to a peak, then fall
-   - Leave small gaps (rests) between phrases for "breathing"
-   - Dynamics swell toward phrase peaks and diminish at phrase ends
-   - Velocity should follow the phrase contour (louder at climax, softer at rest points)
+   - Melodies in 4-bar phrases (antecedent + consequent), arch-shaped
+   - Leave small rests between phrases for breathing
+   - Velocity follows the phrase contour (louder at climax, softer at rests)
 
-3. ACCOMPANIMENT PATTERNS:
-   - For nocturnes: steady arpeggiated left hand (e.g., bass note on beat 1, then broken chord pattern)
-   - For sonatas: varied - block chords, alberti bass, tremolo depending on character
-   - For preludes: one consistent figuration pattern throughout
-   - For fugues: independent contrapuntal lines (no "accompaniment" - all voices are melodic)
-   - The pattern should be rhythmically REGULAR and predictable to ground the free melody
+3. ACCOMPANIMENT:
+   - Use a rhythmically REGULAR, predictable figure to ground the free melody
+   - Do NOT copy the melody's rhythm (rhythmic independence)
+   - When the melody holds long notes, the accompaniment provides motion
 
-4. MELODY-ACCOMPANIMENT COORDINATION:
-   - Melody notes on strong beats should be chord tones (root, 3rd, 5th, 7th)
-   - Melody notes on weak beats can be passing tones, neighbor tones, suspensions
-   - Accompaniment should NOT play the same rhythm as the melody (rhythmic independence)
-   - When melody has long notes, accompaniment provides motion; when melody is active, accompaniment simplifies
-   - Melody register should be clearly above accompaniment (no crossing voices)
+4. MELODY-ACCOMPANIMENT:
+   - Melody notes on strong beats are chord tones; weak beats may be passing/neighbor tones
+   - Melody register stays clearly above the accompaniment (no voice crossing)
 
 5. BASS:
-   - Bass on beat 1 = chord root (occasionally 3rd for first inversion)
-   - Bass movement: root position -> first inversion uses stepwise bass
-   - At cadences: V-I bass movement (up a fourth or down a fifth)
-   - Sustained bass notes (pedal points) at section beginnings and dominant preparation
+   - Beat 1 = chord root (occasionally 3rd for first inversion)
+   - V-I bass motion at cadences; pedal points at section openings
 
-6. DYNAMICS & EXPRESSION:
-   - Velocity range: pp=30-40, p=45-55, mp=58-68, mf=70-82, f=85-100, ff=105-120
-   - Within a phrase, velocity gradually increases to the peak and decreases after
-   - Accompaniment velocity is always 15-25 less than melody velocity
-   - Bass velocity is 5-10 less than melody velocity
+6. DYNAMICS:
+   - pp=30-40, p=45-55, mp=58-68, mf=70-82, f=85-100, ff=105-120
+   - Accompaniment velocity 15-25 below melody; bass 5-10 below melody
 
 NOTE FORMAT:
 - pitch: MIDI number (60=C4, 64=E4, 67=G4, 72=C5)
-- start_beat: position in bar (1.0=beat 1, 2.5=eighth note after beat 2)
+- start_beat: position in bar (1.0=beat 1, 2.5=eighth after beat 2)
 - duration: in beats (0.5=eighth, 1.0=quarter, 2.0=half)
 - velocity: 1-127
 
-EVERY bar in every section MUST have notes for ALL three tracks (melody, accompaniment, bass).
-Output ONLY valid JSON."""
+Output ONLY valid JSON for this one section."""
 
 
+# --------------------------------------------------------------------------- #
+# Form loading
+# --------------------------------------------------------------------------- #
 def list_available_forms():
     """List all form templates available in the library."""
     forms = {}
@@ -161,147 +152,295 @@ def list_available_forms():
 
 
 def load_form(form_id):
-    """Load a specific form template by ID."""
+    """Load a specific form template by ID (or by its 'id' field)."""
     form_path = FORMS_DIR / f"{form_id}.json"
-    if not form_path.exists():
-        for f in FORMS_DIR.glob("*.json"):
-            try:
-                data = json.loads(f.read_text())
-                if data.get("id") == form_id:
-                    return data
-            except Exception:
-                continue
-        return None
-    return json.loads(form_path.read_text())
+    if form_path.exists():
+        return json.loads(form_path.read_text())
+    for f in FORMS_DIR.glob("*.json"):
+        try:
+            data = json.loads(f.read_text())
+            if data.get("id") == form_id:
+                return data
+        except Exception:
+            continue
+    return None
 
 
-def form_to_prompt_text(form_data):
-    """Convert form template to detailed text for the LLM prompt."""
-    lines = []
-    lines.append(f"=== MUSICAL FORM: {form_data['name']} ===")
-    lines.append(form_data["description"])
-    lines.append(f"Form structure: {form_data['structure']['form']}")
-    lines.append(f"Typical tempo: {form_data['typical_tempo_range'][0]}-{form_data['typical_tempo_range'][1]} BPM")
-    lines.append("")
+# --------------------------------------------------------------------------- #
+# Planning (pure)
+# --------------------------------------------------------------------------- #
+def plan_sections(form_data, params):
+    """
+    Decide how many bars each section gets, scaling the target duration across
+    the form's sections while keeping each within its allowed bars_range.
+    Returns a list of {id, name, spec, target_bars, reprise_of}.
+    """
+    beats_per_bar = params.get("time_signature", [4, 4])[0]
+    tempo = params.get("tempo_bpm", 100)
+    duration = params.get("duration_sec", 60)
+    total_target = max(8, round((tempo * duration) / (60 * beats_per_bar)))
 
-    lines.append("SECTIONS (you MUST include ALL of these):")
-    for i, section in enumerate(form_data["structure"]["sections"], 1):
-        lines.append(f"\n--- Section {i}: {section['name']} (ID: {section['id']}) ---")
-        lines.append(f"  Description: {section['description']}")
-        lines.append(f"  Length: {section['bars_range'][0]}-{section['bars_range'][1]} bars")
-        lines.append(f"  Dynamic arc: {section['dynamic_arc']}")
-        lines.append(f"  Key relation: {section['key_relation']}")
-        lines.append(f"  Melody: {section['melody_character']}")
-        lines.append(f"  Accompaniment: {section['accompaniment_character']}")
-        lines.append(f"  Harmonic rhythm: {section['harmonic_rhythm']}")
-        lines.append(f"  Ends with: {section['ends_with']}")
+    sections = form_data["structure"]["sections"]
+    mids = []
+    for s in sections:
+        lo, hi = s.get("bars_range", [8, 8])
+        mids.append((lo + hi) / 2.0)
+    base = sum(mids) or 1.0
+    factor = total_target / base
 
-    lines.append("\nCOMPOSITION RULES:")
-    for rule in form_data.get("composition_rules", []):
-        lines.append(f"  - {rule}")
+    plan = []
+    for s, mid in zip(sections, mids):
+        lo, hi = s.get("bars_range", [8, 8])
+        target = int(round(mid * factor))
+        target = max(lo, min(hi, target))
+        plan.append({
+            "id": s["id"],
+            "name": s.get("name", s["id"]),
+            "spec": s,
+            "target_bars": target,
+            "reprise_of": s.get("reprise_of"),
+        })
+    return plan
 
+
+def _section_spec_text(spec, target_bars):
+    """Render a single section's spec for the prompt."""
+    lines = [f"Section: {spec.get('name', spec['id'])}",
+             f"Length: EXACTLY {target_bars} bars (number them 1..{target_bars})"]
+    for label, key in [
+        ("Character", "description"),
+        ("Melody", "melody_character"),
+        ("Accompaniment", "accompaniment_character"),
+        ("Harmonic rhythm", "harmonic_rhythm"),
+        ("Key relation", "key_relation"),
+        ("Dynamic arc", "dynamic_arc"),
+        ("Ends with", "ends_with"),
+    ]:
+        if spec.get(key):
+            lines.append(f"  {label}: {spec[key]}")
     return "\n".join(lines)
 
 
+# --------------------------------------------------------------------------- #
+# Assembly (pure)
+# --------------------------------------------------------------------------- #
+TRACK_KEYS = ("melody", "accompaniment", "bass")
+
+
+def _section_bar_count(section_result, target_bars):
+    """Highest bar number present across tracks (fallback: target)."""
+    maxbar = 0
+    for key in TRACK_KEYS:
+        for bar_data in section_result.get(key, []):
+            maxbar = max(maxbar, bar_data.get("bar", 0))
+    return maxbar or target_bars
+
+
+def assemble_blueprint(params, form_data, planned, section_results, title=None):
+    """
+    Stitch composed sections into a full blueprint, renumbering each section's
+    local bars (1..N) to absolute positions across the piece.
+    """
+    cursor = 1
+    out_sections = []
+    for plan_item, res in zip(planned, section_results):
+        n_bars = _section_bar_count(res, plan_item["target_bars"])
+        start_bar = cursor
+        offset = start_bar - 1
+
+        section_obj = {
+            "name": plan_item["name"],
+            "form_id": plan_item["id"],
+            "start_bar": start_bar,
+            "end_bar": start_bar + n_bars - 1,
+            "tempo_bpm": res.get("tempo_bpm", params.get("tempo_bpm", 100)),
+            "dynamic": res.get("dynamic", plan_item["spec"].get("dynamic_arc", "mp")),
+            "chord_progression": res.get("chord_progression", []),
+        }
+        for key in TRACK_KEYS:
+            bars = []
+            for bar_data in res.get(key, []):
+                bars.append({
+                    "bar": bar_data.get("bar", 1) + offset,
+                    "notes": bar_data.get("notes", []),
+                })
+            section_obj[key] = bars
+        out_sections.append(section_obj)
+        cursor = start_bar + n_bars
+
+    return {
+        "title": title or params.get("description") or "Generated",
+        "key": params.get("key", "C minor"),
+        "time_signature": params.get("time_signature", [4, 4]),
+        "tempo_bpm": params.get("tempo_bpm", 100),
+        "total_bars": cursor - 1,
+        "form": form_data.get("id", form_data.get("name", "free form")),
+        "tracks": [dict(t) for t in DEFAULT_TRACKS],
+        "sections": out_sections,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Single-section generation (API)
+# --------------------------------------------------------------------------- #
+def _strip_fences(text):
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        start, end = 1, len(lines) - 1
+        while end > start and lines[end].strip() in ("```", ""):
+            end -= 1
+        text = "\n".join(lines[start:end + 1])
+    return text
+
+
+def _memory_context(plan_item, composed_by_id, prev_result):
+    """Build the 'what came before' context for this section."""
+    parts = []
+
+    reprise_id = plan_item.get("reprise_of")
+    if reprise_id and reprise_id in composed_by_id:
+        ref = composed_by_id[reprise_id]
+        parts.append(
+            "THIS SECTION IS A REPRISE of an earlier section. You MUST reuse the "
+            "SAME melodic outline as that theme (the listener must recognize it), "
+            "but ornament/vary it as the section character requires. "
+            "Here is the original melody to restate:")
+        parts.append("ORIGINAL MELODY (JSON): " +
+                      json.dumps(ref.get("melody", []), ensure_ascii=False))
+    else:
+        # Keep contrasting/new sections motivically connected to the opening theme.
+        theme = None
+        for sid in ("A", "Exposition_P", "Exposition", "Opening", "Intro"):
+            if sid in composed_by_id:
+                theme = composed_by_id[sid]
+                break
+        if theme and theme.get("melody"):
+            head = theme["melody"][:2]
+            parts.append(
+                "Stay motivically connected to the piece's main theme. Its opening "
+                "bars were: " + json.dumps(head, ensure_ascii=False))
+
+    if prev_result is not None:
+        last_bars = {}
+        for key in TRACK_KEYS:
+            bars = prev_result.get(key, [])
+            if bars:
+                last_bars[key] = bars[-1]
+        if last_bars:
+            parts.append(
+                "For a smooth join, the LAST bar of the previous section was: " +
+                json.dumps(last_bars, ensure_ascii=False))
+
+    return "\n\n".join(parts)
+
+
+def _build_section_prompt(style_profile_text, params, form_data, plan_item,
+                          memory_text, is_first):
+    parts = ["Compose ONE section of a larger piano piece. "
+             "Output notes for ALL three tracks (melody, accompaniment, bass) in every bar."]
+    parts.append(f"STYLE PROFILE:\n{style_profile_text}")
+
+    parts.append(
+        f"OVERALL FORM: {form_data.get('name', 'free form')} "
+        f"({form_data['structure'].get('form', '')}). "
+        f"This is one of its sections.")
+
+    parts.append(
+        "PIECE PARAMETERS:\n"
+        f"- Key: {params.get('key', 'C minor')}\n"
+        f"- Tempo: {params.get('tempo_bpm', 100)} BPM\n"
+        f"- Time signature: {params.get('time_signature', [4, 4])}\n"
+        f"- Mood: {params.get('mood', 'expressive')}")
+
+    parts.append("THIS SECTION TO COMPOSE NOW:\n" +
+                 _section_spec_text(plan_item["spec"], plan_item["target_bars"]))
+
+    if memory_text:
+        parts.append(memory_text)
+
+    if is_first:
+        parts.append('Include a "title" field for the whole piece in your JSON.')
+
+    parts.append("Output ONLY valid JSON for this one section.")
+    return "\n\n".join(parts)
+
+
+def _generate_section(client, prompt):
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=MAX_TOKENS_PER_SECTION,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = _strip_fences(response.content[0].text)
+    try:
+        section = json.loads(raw)
+    except json.JSONDecodeError as e:
+        logger.error("Section JSON parse failed: %s\nRaw (first 1200): %s", e, raw[:1200])
+        raise ValueError(f"Claude returned invalid JSON for a section: {e}")
+
+    for key in TRACK_KEYS:
+        if key not in section:
+            logger.warning("Section missing '%s' track; using empty.", key)
+            section[key] = []
+    return section
+
+
+# --------------------------------------------------------------------------- #
+# Orchestration
+# --------------------------------------------------------------------------- #
 def generate_blueprint(style_profile_text, params, form_id=None):
-    """Generate full composition blueprint with all tracks."""
+    """Generate a full composition blueprint, one section per API call."""
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
-
     client = anthropic.Anthropic(api_key=api_key)
 
-    form_text = ""
+    form_data = None
     if form_id:
         form_data = load_form(form_id)
         if form_data:
-            form_text = form_to_prompt_text(form_data)
             logger.info("Using form template: %s", form_data["name"])
         else:
-            logger.warning("Form '%s' not found", form_id)
+            logger.warning("Form '%s' not found; using free-form plan.", form_id)
+    if form_data is None:
+        form_data = DEFAULT_FORM
 
-    tempo = params.get("tempo_bpm", 120)
-    duration = params.get("duration_sec", 60)
-    beats_per_bar = params.get("time_signature", [4, 4])[0]
-    total_bars = max(8, int((tempo * duration) / (60 * beats_per_bar)))
-    # Cap at reasonable size to fit in token limit
-    total_bars = min(total_bars, 32)
+    planned = plan_sections(form_data, params)
+    logger.info("Plan: %d sections, %d bars total (%s)",
+                len(planned), sum(p["target_bars"] for p in planned),
+                ", ".join(f"{p['id']}:{p['target_bars']}" for p in planned))
 
-    user_parts = []
-    user_parts.append("Compose a piece with explicit notes for ALL tracks (melody, accompaniment, bass) in every bar.")
-    user_parts.append("")
-    user_parts.append(f"STYLE PROFILE:\n{style_profile_text}")
+    section_results = []
+    composed_by_id = {}
+    title = None
+    prev_result = None
 
-    if form_text:
-        user_parts.append(f"\nFORM TEMPLATE:\n{form_text}")
-        user_parts.append("\nYou MUST follow this form exactly. Every section listed must appear.")
+    for i, plan_item in enumerate(planned):
+        memory_text = _memory_context(plan_item, composed_by_id, prev_result)
+        prompt = _build_section_prompt(
+            style_profile_text, params, form_data, plan_item,
+            memory_text, is_first=(i == 0))
 
-    user_parts.append(f"""
-PARAMETERS:
-- Key: {params.get('key', 'C minor')}
-- Tempo: {tempo} BPM
-- Time signature: {params.get('time_signature', [4, 4])}
-- Target length: {total_bars} bars (~{duration} seconds)
-- Mood: {params.get('mood', 'expressive')}
-- Description: {params.get('description', '')}
-- Instruments: {params.get('instruments', 'piano')}
+        logger.info("Composing section %d/%d: %s (%d bars)...",
+                    i + 1, len(planned), plan_item["name"], plan_item["target_bars"])
+        res = _generate_section(client, prompt)
 
-IMPORTANT:
-- Generate notes for ALL three tracks in every bar
-- Accompaniment should use a consistent rhythmic pattern (e.g., 8 eighth notes per bar for arpeggiation)
-- Bass: one long note per bar on beat 1 (the chord root), optionally a second note on beat 3
-- Melody: singable line with clear phrases, ornaments on weak beats
-- Keep accompaniment velocity 15-25 below melody velocity
-- Use proper voice leading between bars (smooth transitions)
+        if i == 0 and res.get("title"):
+            title = res["title"]
 
-Output ONLY valid JSON.""")
+        section_results.append(res)
+        composed_by_id[plan_item["id"]] = res
+        prev_result = res
 
-    user_message = "\n".join(user_parts)
+    blueprint = assemble_blueprint(params, form_data, planned, section_results, title=title)
 
-    logger.info("Calling Claude API (form=%s, ~%d bars, all tracks)...", form_id or "free", total_bars)
-
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=16000,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
-    )
-
-    raw_text = response.content[0].text.strip()
-
-    if raw_text.startswith("```"):
-        lines = raw_text.split("\n")
-        start = 1
-        end = len(lines) - 1
-        while end > start and lines[end].strip() in ("```", ""):
-            end -= 1
-        raw_text = "\n".join(lines[start:end + 1])
-
-    try:
-        blueprint = json.loads(raw_text)
-    except json.JSONDecodeError as e:
-        logger.error("JSON parse failed: %s", e)
-        logger.error("Raw (first 1500): %s", raw_text[:1500])
-        raise ValueError(f"Claude returned invalid JSON: {e}")
-
-    for field in ["sections", "tracks", "key", "tempo_bpm"]:
-        if field not in blueprint:
-            raise ValueError(f"Missing field: {field}")
-
-    # Stats
-    melody_notes = sum(len(b.get("notes", []))
-                       for s in blueprint["sections"]
-                       for b in s.get("melody", []))
-    acc_notes = sum(len(b.get("notes", []))
-                    for s in blueprint["sections"]
-                    for b in s.get("accompaniment", []))
-    bass_notes = sum(len(b.get("notes", []))
-                     for s in blueprint["sections"]
-                     for b in s.get("bass", []))
-
-    logger.info("Blueprint: '%s' | %d sections | melody=%d, acc=%d, bass=%d notes",
-                blueprint.get("title", "Untitled"),
-                len(blueprint["sections"]),
-                melody_notes, acc_notes, bass_notes)
+    melody_notes = sum(len(b.get("notes", [])) for s in blueprint["sections"] for b in s["melody"])
+    acc_notes = sum(len(b.get("notes", [])) for s in blueprint["sections"] for b in s["accompaniment"])
+    bass_notes = sum(len(b.get("notes", [])) for s in blueprint["sections"] for b in s["bass"])
+    logger.info("Blueprint: '%s' | %d sections | %d bars | melody=%d, acc=%d, bass=%d notes",
+                blueprint.get("title", "Untitled"), len(blueprint["sections"]),
+                blueprint["total_bars"], melody_notes, acc_notes, bass_notes)
 
     return blueprint

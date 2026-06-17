@@ -10,8 +10,4 @@ dist/
 build/
 .idea/
 .vscode/
-*.wav
-*.mp3
 *.mid
-*.mp4
-*.part
