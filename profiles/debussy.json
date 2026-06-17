@@ -1,0 +1,16 @@
+{
+  "composer": "Debussy",
+  "era": "Impressionist (late 19th - early 20th century)",
+  "description": "French composer who loosened functional harmony in favor of color, atmosphere, and timbre. His piano music evokes images through static, sensuous sonorities rather than goal-directed progressions.",
+  "tempo_range": [40, 120],
+  "typical_keys": ["Db major", "C# minor", "Eb major", "F# major", "Gb major", "B major"],
+  "harmonic_language": "Non-functional harmony: parallel chords (planing) of triads, sevenths and ninths; whole-tone and pentatonic scales; modal inflections; unresolved dissonances treated as color; ambiguous, suspended tonality.",
+  "style_notes": [
+    "Move chords in parallel motion (planing) — slide whole sonorities up and down rather than resolving each voice functionally.",
+    "Use the whole-tone scale, pentatonic figures, and church modes to blur the sense of a home key.",
+    "Favor static harmony: dwell on a colorful chord, often over a pedal point, rather than driving toward cadences.",
+    "Texture is layered and atmospheric: shimmering arpeggiated figuration, soft repeated chords, washes of pedal-blurred sound.",
+    "Dynamics stay mostly soft (pp - mp) with subtle swells; climaxes are rare and quickly subside.",
+    "Rhythm is fluid and unmetered in feel — avoid heavy downbeats; let phrases float without strong accent."
+  ]
+}

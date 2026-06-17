@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """
-Music Composer RAG - Generate v3 (with form templates)
+Music Composer RAG - Generate (path C: LLM composer + form templates)
+
+Generation is driven by a hand-authored style profile (profiles/<composer>.json)
+plus a musical form template (forms/<form>.json). No Qdrant / audio pipeline is
+required to run this — only ANTHROPIC_API_KEY.
+
 Usage:
   python3 generate.py --composer "Chopin" --key "E minor" --tempo 72 --duration 90 --mood "melancholic" --form nocturne
-  python3 generate.py --composer "Bach" --key "D major" --tempo 100 --duration 120 --form fugue
+  python3 generate.py --composer "Bach" --key "D minor" --tempo 100 --duration 120 --form fugue
   python3 generate.py --composer "Beethoven" --key "C minor" --tempo 140 --duration 180 --form sonata
   python3 generate.py --composer "Debussy" --key "Db major" --tempo 60 --duration 90 --form prelude
   python3 generate.py --list-forms
+  python3 generate.py --list-composers
 """
 import argparse
 import json
@@ -16,15 +22,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config.settings import (
-    QDRANT_HOST, QDRANT_PORT, COLLECTION_NAME, EMBEDDING_DIM,
-    OUTPUT_DIR, MIDI_DIR,
+from config.settings import OUTPUT_DIR
+from src.style_profiler import (
+    load_static_profile, static_profile_to_prompt_text, list_static_profiles,
 )
-from src.qdrant_store import MusicVectorStore
-from src.style_profiler import build_style_profile, profile_to_prompt_text
 from src.composer_architect import generate_blueprint, list_available_forms
 from src.midi_builder import build_midi
-from src.pattern_extractor import collect_composer_patterns
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,8 +37,8 @@ logger = logging.getLogger("generate")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate music in a composer's style (v3)")
-    parser.add_argument("--composer", "-c", type=str, help="Composer name (must exist in DB)")
+    parser = argparse.ArgumentParser(description="Generate music in a composer's style")
+    parser.add_argument("--composer", "-c", type=str, help="Composer name (must have a profile in profiles/)")
     parser.add_argument("--key", "-k", type=str, default="C minor")
     parser.add_argument("--tempo", "-t", type=int, default=100)
     parser.add_argument("--duration", "-d", type=int, default=60, help="Duration in seconds")
@@ -46,8 +49,8 @@ def main():
                         help="Musical form: nocturne, sonata, fugue, prelude")
     parser.add_argument("--output", "-o", type=str, default=None)
     parser.add_argument("--save-blueprint", action="store_true")
-    parser.add_argument("--no-patterns", action="store_true")
     parser.add_argument("--list-forms", action="store_true", help="List available forms and exit")
+    parser.add_argument("--list-composers", action="store_true", help="List available composer profiles and exit")
     args = parser.parse_args()
 
     # List forms mode
@@ -64,38 +67,33 @@ def main():
             print("No forms found. Check the forms/ directory.")
         return
 
+    # List composers mode
+    if args.list_composers:
+        profiles = list_static_profiles()
+        if profiles:
+            print("\nAvailable composer profiles:")
+            print("-" * 50)
+            for name, data in profiles.items():
+                print(f"  {name:14s}  {data.get('era', '')}")
+        else:
+            print("No profiles found. Add JSON files to the profiles/ directory.")
+        return
+
     if not args.composer:
-        parser.error("--composer is required (or use --list-forms)")
+        parser.error("--composer is required (or use --list-forms / --list-composers)")
 
-    # 1. Connect to Qdrant
-    logger.info("Connecting to Qdrant...")
-    store = MusicVectorStore(
-        host=QDRANT_HOST, port=QDRANT_PORT,
-        collection=COLLECTION_NAME, dim=EMBEDDING_DIM,
-    )
-
-    # 2. Build style profile
-    logger.info("Building style profile for %s...", args.composer)
-    profile = build_style_profile(store, args.composer)
+    # 1. Load style profile (hand-authored, no DB needed)
+    logger.info("Loading style profile for %s...", args.composer)
+    profile = load_static_profile(args.composer)
     if not profile:
-        logger.error("No data for '%s'. Run ingestion first.", args.composer)
+        available = ", ".join(list_static_profiles().keys()) or "none"
+        logger.error("No profile for '%s'. Available: %s", args.composer, available)
         sys.exit(1)
 
-    profile_text = profile_to_prompt_text(profile)
+    profile_text = static_profile_to_prompt_text(profile)
     logger.info("Style profile:\n%s", profile_text)
 
-    # 3. Extract patterns from MIDI
-    patterns = None
-    if not args.no_patterns:
-        logger.info("Extracting accompaniment patterns from MIDI files...")
-        patterns = collect_composer_patterns(MIDI_DIR)
-        if patterns["accompaniment"]:
-            logger.info("  Found %d accompaniment, %d bass patterns",
-                        len(patterns["accompaniment"]), len(patterns["bass"]))
-        else:
-            logger.info("  No patterns found, will use rule-based fallback")
-
-    # 4. Generate blueprint via Claude API
+    # 2. Generate blueprint via Claude API
     form_name = args.form or "free form"
     logger.info("Generating %s in %s via Claude API...", form_name, args.key)
 
@@ -121,7 +119,7 @@ def main():
             json.dump(blueprint, f, indent=2, ensure_ascii=False)
         logger.info("Blueprint saved: %s", bp_path)
 
-    # 5. Build MIDI
+    # 3. Build MIDI
     if args.output:
         midi_path = Path(args.output)
     else:
@@ -130,7 +128,7 @@ def main():
         midi_path = OUTPUT_DIR / "generated" / f"{safe_title}.mid"
 
     logger.info("Building MIDI...")
-    result = build_midi(blueprint, midi_path, style_profile=profile, patterns=patterns)
+    result = build_midi(blueprint, midi_path)
 
     logger.info("=" * 50)
     logger.info("Generation complete!")

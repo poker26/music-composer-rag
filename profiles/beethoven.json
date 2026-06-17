@@ -1,0 +1,16 @@
+{
+  "composer": "Beethoven",
+  "era": "Classical / early Romantic (late 18th - early 19th century)",
+  "description": "German composer who expanded Classical forms with dramatic contrast, motivic development, and rhythmic drive. His piano writing is muscular, architectural, and dynamically extreme.",
+  "tempo_range": [40, 180],
+  "typical_keys": ["C minor", "F minor", "D minor", "Eb major", "C major", "A major", "Bb major"],
+  "harmonic_language": "Strong tonic-dominant polarity, dramatic deceptive cadences, sudden modulations and chromatic mediants, sforzando accents on weak beats, long dominant pedal preparations before structural arrivals.",
+  "style_notes": [
+    "Build material from short, memorable motivic cells (3-4 notes) and develop them obsessively through transposition, fragmentation, and rhythmic augmentation.",
+    "Use sharp dynamic contrast: sudden ff vs p, sforzandi, crescendos that break off unexpectedly.",
+    "Accompaniment varies by character: Alberti bass or broken octaves in lyrical passages, tremolo or repeated block chords for tension, full chords for climaxes.",
+    "Sonata-form thinking: a strong first theme, a contrasting lyrical second theme in a related key, a developmental working-out, then recapitulation.",
+    "Rhythmic drive and syncopation create momentum; accents frequently fall off the beat.",
+    "Wide registral range — let the music span from deep bass octaves to the top of the keyboard for dramatic effect."
+  ]
+}

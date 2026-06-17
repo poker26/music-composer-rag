@@ -1,0 +1,16 @@
+{
+  "composer": "Bach",
+  "era": "Baroque (early 18th century)",
+  "description": "German Baroque master of counterpoint. His keyboard music is built from independent, equal melodic voices woven together with rigorous part-writing and a strong harmonic drive.",
+  "tempo_range": [50, 130],
+  "typical_keys": ["D minor", "C major", "G minor", "B minor", "A minor", "E major", "F major"],
+  "harmonic_language": "Functional tonal harmony with driving harmonic rhythm, circle-of-fifths sequences, suspensions resolving downward, clear cadential formulas (often with a Picardy third in minor), and modulations to closely related keys.",
+  "style_notes": [
+    "Write genuinely independent contrapuntal voices, each a complete melodic line; there is no mere 'accompaniment' — every voice is melodic.",
+    "Use imitation: a subject stated in one voice is answered in another (at the fifth/fourth for a fugue), then developed in episodes built from motivic fragments.",
+    "Maintain a steady, motoric rhythmic pulse (continuous sixteenth or eighth motion shared between voices).",
+    "Voice leading is strict: prepare and resolve dissonances, avoid parallel fifths and octaves, keep voices in their registers without crossing unnecessarily.",
+    "Sequences drive the harmony forward; build episodes from a one- or two-beat motivic cell transposed through a circle of fifths.",
+    "Cadences are emphatic and structural; in minor keys end on a major (Picardy) tonic."
+  ]
+}

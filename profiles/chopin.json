@@ -1,0 +1,16 @@
+{
+  "composer": "Chopin",
+  "era": "Romantic (early 19th century)",
+  "description": "Polish Romantic composer, the central figure of the lyrical piano. His music is idiomatically pianistic: a singing, heavily ornamented right-hand cantilena floating over a wide-spread, pedal-sustained left-hand accompaniment.",
+  "tempo_range": [40, 100],
+  "typical_keys": ["E minor", "Db major", "B minor", "F minor", "A minor", "Ab major", "C# minor"],
+  "harmonic_language": "Chromatic voice leading, frequent secondary dominants and diminished-seventh chords, expressive modulations to remote keys, Neapolitan and augmented-sixth chords at cadences, suspensions and appoggiaturas for tension.",
+  "style_notes": [
+    "Right-hand melody is a vocal, legato line with rubato; decorate it with turns, trills, grace notes, and rapid filigree runs (cadenza-like flourishes), especially in repeats and reprises.",
+    "Left hand: wide broken-chord / arpeggiated accompaniment spanning more than an octave (bass note on beat 1, then the chord spread above), rhythmically steady to contrast the free melody.",
+    "Phrases are mostly 4 + 4 bars (antecedent / consequent) with clear arch contours and breathing rests between phrases.",
+    "Rich use of the sustain pedal implies overlapping harmonies; keep the bass note ringing under the figuration.",
+    "Dynamics are nuanced: frequent hairpins, sudden p subito, climaxes approached by chromatic ascent.",
+    "Favor a 6/8 or 3/4 lilt in nocturnes and waltzes; dotted rhythms and triplet subdivisions are common."
+  ]
+}
