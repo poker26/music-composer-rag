@@ -14,3 +14,7 @@ build/
 
 # Step 4 corpus: raw scores are cloned, not committed (each has its own repo).
 corpus/raw/
+
+# local web test artifacts
+web_test.*
+gen_resp.json

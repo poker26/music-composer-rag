@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music Composer</title>
+<script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
+<style>
+  :root { --bg:#11131a; --panel:#1b1f2a; --line:#2c3240; --fg:#e7ecf3; --muted:#8b94a7; --accent:#7c9cff; --accent2:#b78cff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:920px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font-size:26px; margin:0 0 4px; font-weight:650; }
+  h1 span { background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { color:var(--muted); margin:0 0 28px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px; }
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  label { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 6px; }
+  select,input { width:100%; padding:10px 12px; background:#0e1017; border:1px solid var(--line); border-radius:9px; color:var(--fg); font-size:14px; }
+  select:focus,input:focus { outline:none; border-color:var(--accent); }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:16px; }
+  button.go { margin-top:22px; width:100%; padding:13px; border:0; border-radius:10px; cursor:pointer;
+    background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#0b0d12; font-weight:700; font-size:15px; }
+  button.go:disabled { opacity:.55; cursor:wait; }
+  #status { margin-top:14px; min-height:20px; color:var(--muted); font-size:13px; }
+  #result { margin-top:24px; display:none; }
+  #result.show { display:block; }
+  .rtitle { font-size:19px; font-weight:650; margin:0 0 2px; }
+  .rmeta { color:var(--muted); font-size:13px; margin:0 0 16px; }
+  midi-player { width:100%; margin-bottom:10px; --color-accent:var(--accent); }
+  midi-visualizer { display:block; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#0e1017; max-height:240px; }
+  midi-visualizer svg rect.note { fill:var(--accent); }
+  .report { white-space:pre-wrap; font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:#0e1017; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:16px; color:#c8d2e4; }
+  .dl { display:inline-block; margin-top:14px; color:var(--accent); text-decoration:none; font-size:14px; }
+  .dl:hover { text-decoration:underline; }
+  .err { color:#ff8b8b; }
+  .spinner { display:inline-block; width:13px; height:13px; border:2px solid var(--line); border-top-color:var(--accent);
+    border-radius:50%; animation:spin .8s linear infinite; vertical-align:-2px; margin-right:7px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>Music Composer</span></h1>
+  <p class="sub">Generate a piece section-by-section in a composer's style, then listen in the browser.</p>
+
+  <div class="panel">
+    <div class="grid">
+      <div>
+        <label for="composer">Composer</label>
+        <select id="composer"></select>
+      </div>
+      <div>
+        <label for="form">Form</label>
+        <select id="form"></select>
+      </div>
+    </div>
+    <div class="row3">
+      <div>
+        <label for="key">Key</label>
+        <input id="key" value="E minor" />
+      </div>
+      <div>
+        <label for="tempo">Tempo (BPM)</label>
+        <input id="tempo" type="number" value="72" min="30" max="220" />
+      </div>
+      <div>
+        <label for="duration">Duration (sec)</label>
+        <input id="duration" type="number" value="60" min="20" max="240" />
+      </div>
+    </div>
+    <div class="row3" style="grid-template-columns:1fr;">
+      <div>
+        <label for="mood">Mood</label>
+        <input id="mood" value="expressive, lyrical" />
+      </div>
+    </div>
+    <button class="go" id="go">Generate</button>
+    <div id="status"></div>
+  </div>
+
+  <div id="result" class="panel">
+    <div class="rtitle" id="rtitle"></div>
+    <div class="rmeta" id="rmeta"></div>
+    <midi-player id="player" sound-font visualizer="#vis"></midi-player>
+    <midi-visualizer id="vis" type="piano-roll"></midi-visualizer>
+    <div class="report" id="report"></div>
+    <a class="dl" id="dl" download="composition.mid">Download MIDI</a>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+async function loadOptions() {
+  try {
+    const r = await fetch("api/options");
+    const o = await r.json();
+    $("composer").innerHTML = o.composers.map(c => `<option value="${c.name}">${c.name} — ${c.era}</option>`).join("");
+    $("form").innerHTML = o.forms.map(f => `<option value="${f.id}">${f.name}</option>`).join("");
+  } catch (e) {
+    $("status").innerHTML = `<span class="err">Could not load options: ${e}</span>`;
+  }
+}
+
+function b64ToDataUri(b64) { return "data:audio/midi;base64," + b64; }
+
+async function generate() {
+  const btn = $("go");
+  btn.disabled = true;
+  $("result").classList.remove("show");
+  $("status").innerHTML = `<span class="spinner"></span>Composing section by section via Claude… this takes ~1–2 minutes.`;
+
+  const body = {
+    composer: $("composer").value,
+    form: $("form").value,
+    key: $("key").value,
+    tempo: parseInt($("tempo").value, 10),
+    duration: parseInt($("duration").value, 10),
+    mood: $("mood").value,
+  };
+
+  try {
+    const r = await fetch("api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ detail: r.statusText }));
+      throw new Error(err.detail || ("HTTP " + r.status));
+    }
+    const data = await r.json();
+    const uri = b64ToDataUri(data.midi_base64);
+    $("rtitle").textContent = data.title;
+    $("rmeta").textContent = `${data.form} · ${data.key} · ${data.tempo} BPM · ${data.sections} sections · ${data.bars} bars`;
+    $("player").src = uri;
+    $("dl").href = uri;
+    $("dl").download = (data.title || "composition").replace(/[^\w -]/g, "").trim().replace(/\s+/g, "_") + ".mid";
+    $("report").textContent = data.report;
+    $("result").classList.add("show");
+    $("status").textContent = "";
+  } catch (e) {
+    $("status").innerHTML = `<span class="err">${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$("go").addEventListener("click", generate);
+loadOptions();
+</script>
+</body>
+</html>

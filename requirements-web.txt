@@ -1,0 +1,4 @@
+# Web UI (webapp.py). Runs the existing generator behind a small HTTP API and
+# serves a browser front-end with an in-browser MIDI player.
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
