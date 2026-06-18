@@ -13,6 +13,7 @@ retrieval is a no-op and the prompt is unchanged (graceful fallback).
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 INDEX_DIR = Path(__file__).parent.parent / "corpus" / "index"
@@ -50,6 +51,8 @@ def _rotate(items, offset, n):
 
 def reference_block(composer, section_index=0, n_progressions=6, n_cadences=4, n_motifs=5):
     """Formatted prompt text with real material for this composer, or '' if no corpus."""
+    if os.environ.get("MUSIC_DISABLE_CORPUS"):
+        return ""  # ablation switch for A/B measurement
     index = load_index(composer)
     if not index:
         return ""
