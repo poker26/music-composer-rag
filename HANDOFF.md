@@ -35,7 +35,9 @@ on a local machine: read this file, then continue from "Open tasks".
 - `git grep` confirms no remaining references to qdrant/clap/librosa/gradio/supabase.
 - Verified WITHOUT an API key: `--list-composers`, `--list-forms`, section
   planning, bar renumbering, and MIDI assembly all work.
-- NOT yet verified: a real end-to-end generation (needs `ANTHROPIC_API_KEY`).
+- **Migrated to a local machine 2026-06-18 and verified end-to-end** (Chopin
+  nocturne + Bach prelude -> blueprint + MIDI). Fixed a dead model id
+  (`claude-sonnet-4-20250514` -> `claude-sonnet-4-6`).
 
 ## How to run locally
 
@@ -49,24 +51,24 @@ python generate.py --composer "Chopin" --form nocturne --key "E minor" --tempo 7
 
 ## Open tasks
 
-1. **Run a real generation** and sanity-check the MIDI / blueprint. Listen and
-   judge whether section-by-section improved coherence and reprises.
-2. **Qdrant cleanup (blocked in the cloud sandbox — do this locally).** The old
-   collection lives at `45.12.72.157:6333`, collection `music_fragments`. From a
-   machine with network access to that host:
-   ```python
-   from qdrant_client import QdrantClient
-   c = QdrantClient(host="45.12.72.157", port=6333, api_key="<KEY>")
-   print(c.get_collections())            # confirm it is the old collection
-   c.delete_collection("music_fragments")
-   ```
-   (No Supabase artifacts exist — this project never used Supabase.)
-3. **Step 3 — evaluation metrics** (planned, not started): symbolic checks on the
-   output MIDI (in-key ratio, voice-leading smoothness, reprise similarity,
-   parallel-fifth detection) printed alongside results, to give an objective
-   signal when tuning prompts.
+1. ~~**Run a real generation**~~ — DONE 2026-06-18. Chopin nocturne + Bach prelude
+   generate cleanly. Still worth a *listening* pass to judge coherence/reprises by ear.
+2. ~~**Qdrant cleanup**~~ — DONE 2026-06-18. `music_fragments` deleted from
+   `45.12.72.157:6333` (was 8493 points). Other collections on that host belong to
+   unrelated projects and were left untouched.
+3. ~~**Step 3 — evaluation metrics**~~ — DONE 2026-06-18. `src/evaluator.py` prints a
+   symbolic report after each generation (skip with `--no-eval`) and runs standalone:
+   `python -m src.evaluator output/blueprints/<name>.json`. Covers in-key ratio,
+   melody smoothness, reprise skeleton-vs-stream similarity, and parallel P5/P8.
 4. **Step 4 (optional) — real retrieval**: feed real progressions/figures from a
    CLEAN symbolic MIDI corpus (not audio transcription) into the section prompts.
+   NOT started.
+
+### Tuning leads surfaced by the new metrics
+- Bach prelude flagged **41 parallel octaves** (melody vs bass) — the figuration
+  prompt likely lets the bass shadow the melody at the octave. Worth a prompt tweak.
+- Chopin nocturne reprise: 88% skeleton / 16% full-stream (29->59 notes) — the theme
+  is recognizable under heavy ornamentation, which is the intended behavior.
 
 ## Why the cloud session couldn't finish the Qdrant cleanup
 
