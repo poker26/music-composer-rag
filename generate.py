@@ -28,6 +28,7 @@ from src.style_profiler import (
 )
 from src.composer_architect import generate_blueprint, list_available_forms
 from src.midi_builder import build_midi
+from src.evaluator import evaluate_blueprint, format_report
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,6 +50,7 @@ def main():
                         help="Musical form: nocturne, sonata, fugue, prelude")
     parser.add_argument("--output", "-o", type=str, default=None)
     parser.add_argument("--save-blueprint", action="store_true")
+    parser.add_argument("--no-eval", action="store_true", help="Skip the symbolic evaluation report")
     parser.add_argument("--list-forms", action="store_true", help="List available forms and exit")
     parser.add_argument("--list-composers", action="store_true", help="List available composer profiles and exit")
     args = parser.parse_args()
@@ -140,6 +142,10 @@ def main():
     logger.info("  Tracks: %d", len(blueprint["tracks"]))
     logger.info("  Output: %s", result)
     logger.info("=" * 50)
+
+    # 4. Symbolic evaluation (objective signal for tuning prompts)
+    if not args.no_eval:
+        print("\n" + format_report(evaluate_blueprint(blueprint)))
 
 
 if __name__ == "__main__":
