@@ -381,19 +381,35 @@ def _build_section_prompt(style_profile_text, params, form_data, plan_item,
     return "\n\n".join(parts)
 
 
-def _generate_section(client, prompt):
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=MAX_TOKENS_PER_SECTION,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = _strip_fences(response.content[0].text)
-    try:
-        section = json.loads(raw)
-    except json.JSONDecodeError as e:
-        logger.error("Section JSON parse failed: %s\nRaw (first 1200): %s", e, raw[:1200])
-        raise ValueError(f"Claude returned invalid JSON for a section: {e}")
+def _generate_section(client, prompt, attempts=3):
+    """Compose one section, retrying if the model returns empty/invalid JSON.
+
+    A single malformed section response used to abort the whole multi-minute
+    generation; transient empties resolve on a retry.
+    """
+    raw = ""
+    last_err = None
+    for attempt in range(1, attempts + 1):
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=MAX_TOKENS_PER_SECTION,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = response.content[0].text if response.content else ""
+        raw = _strip_fences(text)
+        try:
+            section = json.loads(raw)
+            break
+        except json.JSONDecodeError as e:
+            last_err = e
+            logger.warning("Section JSON parse failed (attempt %d/%d, stop_reason=%s, %d chars): %s",
+                           attempt, attempts, getattr(response, "stop_reason", "?"), len(raw), e)
+            if getattr(response, "stop_reason", None) == "max_tokens":
+                logger.warning("  section hit max_tokens (%d) and was truncated", MAX_TOKENS_PER_SECTION)
+    else:
+        logger.error("Section parse failed after %d attempts.\nRaw (first 1200): %s", attempts, raw[:1200])
+        raise ValueError(f"Claude returned invalid JSON for a section after {attempts} attempts: {last_err}")
 
     for key in TRACK_KEYS:
         if key not in section:
