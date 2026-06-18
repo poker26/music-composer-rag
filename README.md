@@ -25,7 +25,13 @@ python generate.py --composer "Bach"   --form fugue    --key "D minor" --tempo 1
 ```
 
 Output MIDI lands in `output/generated/`. Add `--save-blueprint` to also dump
-the JSON score.
+the JSON score. After each run a **symbolic evaluation** is printed (in-key
+ratio, melody smoothness, reprise similarity, parallel fifths/octaves); skip it
+with `--no-eval`, or run it standalone on a saved blueprint:
+
+```bash
+python -m src.evaluator output/blueprints/<name>.json
+```
 
 ## How it works
 
@@ -46,6 +52,36 @@ CLI params (key, tempo...) ─────────────────�
 - **Form templates** (`forms/<form>.json`): sections, dynamic arcs, harmonic
   rhythm, composition rules. A section may declare `reprise_of` to mark it as a
   return of an earlier section.
+- **Reference corpus** (optional, `corpus/index/<composer>.json`): when present,
+  each section prompt is enriched with *real* material — harmonic progressions,
+  cadences, and melodic motifs mined from that composer's actual scores. See
+  "Reference corpus" below. If no index exists for a composer, generation is
+  unaffected.
+
+## Reference corpus (Step 4 — optional)
+
+`ingest_corpus.py` parses a clean symbolic score corpus (Humdrum `**kern` or MIDI)
+with `music21` and extracts key-independent material — Roman-numeral progressions,
+cadences, and melodic interval motifs — aggregated by frequency into
+`corpus/index/<composer>.json`. At generation time `src/retrieval.py` injects this
+into the section prompt (the model transposes it into the target key). `music21` is
+needed only for ingestion; generation reads the JSON index with the stdlib alone.
+
+```bash
+pip install -r requirements-corpus.txt
+
+# Clone clean public-domain corpora (engraving-derived **kern, not audio transcription):
+git clone https://github.com/craigsapp/bach-370-chorales       corpus/raw/bach-370-chorales
+git clone https://github.com/craigsapp/beethoven-piano-sonatas corpus/raw/beethoven-piano-sonatas
+git clone https://github.com/craigsapp/chopin-mazurkas         corpus/raw/chopin-mazurkas
+git clone https://github.com/craigsapp/chopin-preludes         corpus/raw/chopin-preludes
+
+python ingest_corpus.py --limit 40        # build corpus/index/*.json
+python -m src.retrieval Chopin            # preview the retrieved block
+```
+
+`corpus/raw/` is gitignored (each corpus has its own repo); the small
+`corpus/index/*.json` files are committed.
 
 ## Project Structure
 
@@ -56,14 +92,20 @@ config/settings.py         - Paths
 src/style_profiler.py      - Load style profiles -> prompt text
 src/composer_architect.py  - Plan sections, call Claude per section, assemble blueprint
 src/midi_builder.py        - Convert the JSON blueprint to a multi-track MIDI file
+src/evaluator.py           - Symbolic evaluation metrics on a blueprint
+src/retrieval.py           - Inject real corpus material into section prompts (runtime)
+ingest_corpus.py           - Build corpus/index/*.json from a symbolic score corpus
+corpus/index/              - Per-composer retrieval indices (committed)
 generate.py                - CLI: generate a composition
 ```
 
 ## Roadmap
 
-- [ ] Symbolic evaluation metrics (in-key ratio, voice-leading smoothness, reprise similarity)
-- [ ] Optional symbolic retrieval: feed real progressions/figures from a clean MIDI corpus into the prompt
+- [x] Symbolic evaluation metrics (in-key ratio, voice-leading smoothness, reprise similarity)
+- [x] Optional symbolic retrieval: feed real progressions/figures from a clean score corpus into the prompt
 - [ ] MIDI -> audio rendering for quick listening
+- [ ] Bias retrieval by section character (opening vs cadential vs development)
+- [ ] Debussy corpus (no clean **kern source wired yet)
 
 ## License
 

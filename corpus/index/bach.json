@@ -1,0 +1,511 @@
+{
+  "composer": "Bach",
+  "source_repos": [
+    "bach-370-chorales"
+  ],
+  "scores_available": 370,
+  "scores_analyzed": 40,
+  "modes": {
+    "major": 21,
+    "minor": 19
+  },
+  "progressions": [
+    {
+      "roman": [
+        "I",
+        "V",
+        "I"
+      ],
+      "count": 28
+    },
+    {
+      "roman": [
+        "ii",
+        "V",
+        "I"
+      ],
+      "count": 28
+    },
+    {
+      "roman": [
+        "V",
+        "I",
+        "IV"
+      ],
+      "count": 28
+    },
+    {
+      "roman": [
+        "IV",
+        "vii",
+        "I"
+      ],
+      "count": 25
+    },
+    {
+      "roman": [
+        "I",
+        "IV",
+        "V"
+      ],
+      "count": 22
+    },
+    {
+      "roman": [
+        "V",
+        "I",
+        "V"
+      ],
+      "count": 20
+    },
+    {
+      "roman": [
+        "i",
+        "V",
+        "I"
+      ],
+      "count": 20
+    },
+    {
+      "roman": [
+        "i",
+        "ii",
+        "V"
+      ],
+      "count": 20
+    },
+    {
+      "roman": [
+        "II",
+        "V",
+        "I"
+      ],
+      "count": 19
+    },
+    {
+      "roman": [
+        "i",
+        "V",
+        "i"
+      ],
+      "count": 19
+    },
+    {
+      "roman": [
+        "vi",
+        "II",
+        "V"
+      ],
+      "count": 18
+    },
+    {
+      "roman": [
+        "vi",
+        "V",
+        "I"
+      ],
+      "count": 16
+    },
+    {
+      "roman": [
+        "V",
+        "I",
+        "ii"
+      ],
+      "count": 15
+    },
+    {
+      "roman": [
+        "V",
+        "i",
+        "ii"
+      ],
+      "count": 15
+    },
+    {
+      "roman": [
+        "V",
+        "vi",
+        "V"
+      ],
+      "count": 15
+    },
+    {
+      "roman": [
+        "I",
+        "V",
+        "vi"
+      ],
+      "count": 14
+    },
+    {
+      "roman": [
+        "I",
+        "i",
+        "V"
+      ],
+      "count": 14
+    },
+    {
+      "roman": [
+        "ii",
+        "V",
+        "i"
+      ],
+      "count": 14
+    },
+    {
+      "roman": [
+        "iv",
+        "V",
+        "i"
+      ],
+      "count": 14
+    },
+    {
+      "roman": [
+        "IV",
+        "V",
+        "I"
+      ],
+      "count": 13
+    },
+    {
+      "roman": [
+        "I",
+        "IV",
+        "vii"
+      ],
+      "count": 12
+    },
+    {
+      "roman": [
+        "I",
+        "ii",
+        "V"
+      ],
+      "count": 12
+    },
+    {
+      "roman": [
+        "ii",
+        "vii",
+        "I"
+      ],
+      "count": 12
+    },
+    {
+      "roman": [
+        "I",
+        "ii",
+        "V",
+        "I"
+      ],
+      "count": 12
+    }
+  ],
+  "cadences": [
+    {
+      "roman": [
+        "V",
+        "I"
+      ],
+      "count": 140
+    },
+    {
+      "roman": [
+        "V",
+        "i"
+      ],
+      "count": 78
+    },
+    {
+      "roman": [
+        "vii",
+        "I"
+      ],
+      "count": 53
+    },
+    {
+      "roman": [
+        "vii",
+        "i"
+      ],
+      "count": 23
+    },
+    {
+      "roman": [
+        "ii",
+        "I"
+      ],
+      "count": 21
+    },
+    {
+      "roman": [
+        "III",
+        "i"
+      ],
+      "count": 21
+    },
+    {
+      "roman": [
+        "ii",
+        "i"
+      ],
+      "count": 21
+    },
+    {
+      "roman": [
+        "IV",
+        "I"
+      ],
+      "count": 20
+    },
+    {
+      "roman": [
+        "bVII",
+        "i"
+      ],
+      "count": 17
+    },
+    {
+      "roman": [
+        "iv",
+        "I"
+      ],
+      "count": 14
+    },
+    {
+      "roman": [
+        "bVI",
+        "i"
+      ],
+      "count": 12
+    },
+    {
+      "roman": [
+        "vi",
+        "I"
+      ],
+      "count": 11
+    }
+  ],
+  "melodic_motifs": [
+    {
+      "intervals": [
+        1,
+        2,
+        -2,
+        -1
+      ],
+      "count": 27
+    },
+    {
+      "intervals": [
+        2,
+        -2,
+        -2,
+        -1
+      ],
+      "count": 23
+    },
+    {
+      "intervals": [
+        -2,
+        -2,
+        -1,
+        -2
+      ],
+      "count": 23
+    },
+    {
+      "intervals": [
+        -1,
+        -2,
+        -2,
+        2
+      ],
+      "count": 22
+    },
+    {
+      "intervals": [
+        2,
+        2,
+        1,
+        2
+      ],
+      "count": 21
+    },
+    {
+      "intervals": [
+        -2,
+        -1,
+        -2,
+        2
+      ],
+      "count": 20
+    },
+    {
+      "intervals": [
+        2,
+        1,
+        2,
+        -2
+      ],
+      "count": 20
+    },
+    {
+      "intervals": [
+        2,
+        2,
+        -2,
+        -2
+      ],
+      "count": 19
+    },
+    {
+      "intervals": [
+        1,
+        -1,
+        -2,
+        -2
+      ],
+      "count": 19
+    },
+    {
+      "intervals": [
+        -1,
+        -2,
+        2,
+        1
+      ],
+      "count": 18
+    },
+    {
+      "intervals": [
+        -2,
+        -1,
+        -2,
+        -2
+      ],
+      "count": 17
+    },
+    {
+      "intervals": [
+        2,
+        1,
+        -1,
+        -2
+      ],
+      "count": 17
+    },
+    {
+      "intervals": [
+        2,
+        -2,
+        -1,
+        -2
+      ],
+      "count": 17
+    },
+    {
+      "intervals": [
+        -2,
+        -2,
+        2,
+        2
+      ],
+      "count": 16
+    },
+    {
+      "intervals": [
+        2,
+        1,
+        2,
+        2
+      ],
+      "count": 14
+    },
+    {
+      "intervals": [
+        -2,
+        -2,
+        -1,
+        1
+      ],
+      "count": 14
+    },
+    {
+      "intervals": [
+        -1,
+        -2,
+        2,
+        -2
+      ],
+      "count": 12
+    },
+    {
+      "intervals": [
+        1,
+        2,
+        2,
+        -2
+      ],
+      "count": 12
+    },
+    {
+      "intervals": [
+        3,
+        -2,
+        -1,
+        -2
+      ],
+      "count": 11
+    },
+    {
+      "intervals": [
+        -2,
+        2,
+        1,
+        2
+      ],
+      "count": 11
+    },
+    {
+      "intervals": [
+        -2,
+        -1,
+        -2,
+        0
+      ],
+      "count": 11
+    },
+    {
+      "intervals": [
+        2,
+        2,
+        1,
+        -1
+      ],
+      "count": 11
+    },
+    {
+      "intervals": [
+        1,
+        -1,
+        -2,
+        2
+      ],
+      "count": 11
+    },
+    {
+      "intervals": [
+        0,
+        2,
+        2,
+        1
+      ],
+      "count": 10
+    }
+  ]
+}

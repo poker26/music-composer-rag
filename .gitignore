@@ -11,3 +11,6 @@ build/
 .idea/
 .vscode/
 *.mid
+
+# Step 4 corpus: raw scores are cloned, not committed (each has its own repo).
+corpus/raw/

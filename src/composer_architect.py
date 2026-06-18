@@ -20,6 +20,8 @@ import logging
 from pathlib import Path
 import anthropic
 
+from src import retrieval
+
 logger = logging.getLogger(__name__)
 
 FORMS_DIR = Path(__file__).parent.parent / "forms"
@@ -336,10 +338,15 @@ def _memory_context(plan_item, composed_by_id, prev_result):
 
 
 def _build_section_prompt(style_profile_text, params, form_data, plan_item,
-                          memory_text, is_first):
+                          memory_text, is_first, section_index=0):
     parts = ["Compose ONE section of a larger piano piece. "
              "Output notes for ALL three tracks (melody, accompaniment, bass) in every bar."]
     parts.append(f"STYLE PROFILE:\n{style_profile_text}")
+
+    # Step 4: real reference material retrieved from the composer's own scores.
+    reference = retrieval.reference_block(params.get("composer", ""), section_index=section_index)
+    if reference:
+        parts.append(reference)
 
     parts.append(
         f"OVERALL FORM: {form_data.get('name', 'free form')} "
@@ -421,7 +428,7 @@ def generate_blueprint(style_profile_text, params, form_id=None):
         memory_text = _memory_context(plan_item, composed_by_id, prev_result)
         prompt = _build_section_prompt(
             style_profile_text, params, form_data, plan_item,
-            memory_text, is_first=(i == 0))
+            memory_text, is_first=(i == 0), section_index=i)
 
         logger.info("Composing section %d/%d: %s (%d bars)...",
                     i + 1, len(planned), plan_item["name"], plan_item["target_bars"])

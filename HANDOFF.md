@@ -60,9 +60,19 @@ python generate.py --composer "Chopin" --form nocturne --key "E minor" --tempo 7
    symbolic report after each generation (skip with `--no-eval`) and runs standalone:
    `python -m src.evaluator output/blueprints/<name>.json`. Covers in-key ratio,
    melody smoothness, reprise skeleton-vs-stream similarity, and parallel P5/P8.
-4. **Step 4 (optional) — real retrieval**: feed real progressions/figures from a
-   CLEAN symbolic MIDI corpus (not audio transcription) into the section prompts.
-   NOT started.
+4. ~~**Step 4 — real retrieval**~~ — DONE 2026-06-18. `ingest_corpus.py` mines real
+   Roman-numeral progressions, cadences, and melodic motifs from a clean symbolic
+   corpus (Craig Sapp / KernScores `**kern`, engraving-derived — NOT audio
+   transcription) into `corpus/index/<composer>.json`. `src/retrieval.py` injects
+   that into each section prompt; `music21` is ingestion-only. Built for Bach,
+   Beethoven, Chopin (40 scores each). Debussy has no `**kern` source yet, so it
+   falls back gracefully (prompt unchanged). See README "Reference corpus".
+
+### Possible next steps
+- Bias retrieval by section character (opening vs cadential vs development) instead
+  of rotating composer-level material.
+- Wire a Debussy corpus.
+- Tune the Bach figuration prompt — the evaluator flagged parallel octaves there.
 
 ### Tuning leads surfaced by the new metrics
 - Bach prelude flagged **41 parallel octaves** (melody vs bass) — the figuration

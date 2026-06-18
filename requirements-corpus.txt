@@ -1,0 +1,3 @@
+# Step 4 corpus ingestion only (ingest_corpus.py). NOT needed to run generate.py —
+# generation reads the pre-built JSON index in corpus/index/ with the stdlib alone.
+music21>=9.1.0

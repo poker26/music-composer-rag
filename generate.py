@@ -100,6 +100,7 @@ def main():
     logger.info("Generating %s in %s via Claude API...", form_name, args.key)
 
     params = {
+        "composer": args.composer,
         "key": args.key,
         "tempo_bpm": args.tempo,
         "duration_sec": args.duration,
