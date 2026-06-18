@@ -99,7 +99,10 @@ COMPOSITION PRINCIPLES:
 
 1. VOICE LEADING:
    - Accompaniment voices move by step or common tone when chords change
-   - Avoid parallel fifths and octaves between any pair of voices
+   - Avoid parallel fifths and octaves between ANY pair of voices. This matters
+     MOST for the OUTER voices (melody and bass): never let consecutive melody
+     and bass notes move in the same direction a perfect 5th or octave apart.
+     If both would land on an octave/fifth, change the bass register or octave.
    - Bass moves by step, fourth, or fifth (not random leaps)
 
 2. PHRASING:
@@ -119,6 +122,11 @@ COMPOSITION PRINCIPLES:
 5. BASS:
    - Beat 1 = chord root (occasionally 3rd for first inversion)
    - V-I bass motion at cadences; pedal points at section openings
+   - The bass is HARMONICALLY INDEPENDENT: it grounds the harmony with roots and
+     stepwise motion. Do NOT double the melody or echo its figuration an octave
+     (or fifth) below. In running-figuration textures (e.g. a Bach prelude), keep
+     the broken-chord figure in ONE voice (accompaniment) while the bass holds or
+     walks the chord roots underneath — the outer voices must not run in parallel.
 
 6. DYNAMICS:
    - pp=30-40, p=45-55, mp=58-68, mf=70-82, f=85-100, ff=105-120
